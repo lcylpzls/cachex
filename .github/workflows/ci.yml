@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go: ['1.26.x']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@2026.1
+          staticcheck ./...
+
+      - name: Test
+        run: go test -count=1 ./...
+
+      - name: Race detector (Linux)
+        if: runner.os == 'Linux'
+        run: go test -race -count=1 ./...
+
+      - name: Coverage (Linux)
+        if: runner.os == 'Linux'
+        run: go test -count=1 -coverprofile=coverage.out ./...
+
+      - name: Show coverage
+        if: runner.os == 'Linux'
+        run: go tool cover -func coverage.out
+
+      - name: Upload coverage artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.go }}
+          path: coverage.out
+
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: Fuzz TTL (5s)
+        run: go test -run '^$' -fuzz '^FuzzTTL$' -fuzztime=5s .
+
+      - name: Fuzz loader (5s)
+        run: go test -run '^$' -fuzz '^FuzzLoader$' -fuzztime=5s .
+
+      - name: Fuzz shard (5s)
+        run: go test -run '^$' -fuzz '^FuzzShard$' -fuzztime=5s .
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: Build and vet examples
+        run: |
+          for dir in basic load; do
+            (cd examples/$dir && go build ./... && go vet ./...)
+          done
+
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: Run benchmarks (baseline only, no gate)
+        run: go test -run '^$' -bench . -benchmem -benchtime=1s . | tee bench.log
+
+      - name: Upload benchmark log
+        uses: actions/upload-artifact@v7
+        with:
+          name: bench-log
+          path: bench.log
+
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: go.mod drift check
+        run: |
+          go mod tidy
+          if ! git diff --exit-code go.mod go.sum; then
+            echo "go.mod/go.sum 漂移,请执行 go mod tidy 后提交"
+            exit 1
+          fi
+
+  apidiff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: Install apidiff
+        run: go install golang.org/x/exp/cmd/apidiff@latest
+
+      - name: API diff vs previous tag (informational)
+        continue-on-error: true
+        run: |
+          PREV=$(git tag --sort=-version:refname | head -n 1)
+          if [ -z "$PREV" ]; then
+            echo "无上一版本 tag,跳过 apidiff"
+            exit 0
+          fi
+          git worktree add /tmp/cachex-prev "$PREV" >/dev/null
+          (cd /tmp/cachex-prev && apidiff -w /tmp/cachex-old.export github.com/lcylpzls/cachex)
+          apidiff -w /tmp/cachex-new.export github.com/lcylpzls/cachex
+          apidiff /tmp/cachex-old.export /tmp/cachex-new.export
+          git worktree remove /tmp/cachex-prev --force
+
+  vuln:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          check-latest: true
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
