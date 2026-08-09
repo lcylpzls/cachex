@@ -33,3 +33,21 @@
 
 - 逐出路径预期大幅下降;Get 采样模式接近纯分片 map;
 - 对比基准见 docs/iteration-plan.md(v0.1.0 基线 vs v0.2.0)。
+
+## [v1.0.0] - 2026-08-09
+
+### 正式版
+
+- 公开 API 冻结,遵循语义化版本;
+- Version 常量更新为 v1.0.0;
+- README 增加稳定性承诺(兼容性策略与发布门禁);
+- docs/comparison.md 竞品全维度对比入库;
+- 全量回归:100% 覆盖率、race、staticcheck、fuzz、govulncheck、
+  apidiff 对比 v0.2.0、三平台 CI。
+
+### 版本历程
+
+- v0.1.0:并发分片 / 精确 LRU / TTL / Singleflight 击穿防护;
+- v0.2.0:性能优化(采样 LRU、逐出原子候选、侵入式链表,
+  逐出 -71%、分片写 -75%);
+- v1.0.0:正式版,API 冻结。

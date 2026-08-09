@@ -7,6 +7,12 @@ import (
 	"github.com/lcylpzls/errx"
 )
 
+func TestVersion(t *testing.T) {
+	if Version != "v1.0.0" {
+		t.Errorf("Version = %s,want v1.0.0", Version)
+	}
+}
+
 func TestDefaultConfig(t *testing.T) {
 	cfg := defaultConfig()
 	if cfg.lruRefresh != 1 {
