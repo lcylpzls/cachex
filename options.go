@@ -102,19 +102,19 @@ func WithLRURefresh(interval int) Option {
 // validateConfig 校验配置参数。
 func validateConfig(cfg config) error {
 	if cfg.shards <= 0 {
-		return errx.New(errx.KindInvalid, CodeInvalidConfig, "Shards 必须大于 0")
+		return errx.NewCode(CodeInvalidConfig, "Shards 必须大于 0")
 	}
 	if cfg.capacity < 0 {
-		return errx.New(errx.KindInvalid, CodeInvalidConfig, "Capacity 不能为负数")
+		return errx.NewCode(CodeInvalidConfig, "Capacity 不能为负数")
 	}
 	if cfg.defaultTTL < 0 {
-		return errx.New(errx.KindInvalid, CodeInvalidConfig, "DefaultTTL 不能为负数")
+		return errx.NewCode(CodeInvalidConfig, "DefaultTTL 不能为负数")
 	}
 	if cfg.cleanupInterval < 0 {
-		return errx.New(errx.KindInvalid, CodeInvalidConfig, "CleanupInterval 不能为负数")
+		return errx.NewCode(CodeInvalidConfig, "CleanupInterval 不能为负数")
 	}
 	if cfg.lruRefresh < 1 {
-		return errx.New(errx.KindInvalid, CodeInvalidConfig, "LRURefresh 必须大于等于 1")
+		return errx.NewCode(CodeInvalidConfig, "LRURefresh 必须大于等于 1")
 	}
 	return nil
 }
