@@ -50,7 +50,7 @@ func New(opts ...Option) (*Cache, error) {
 func (c *Cache) Get(key string) (any, bool) {
 	now := time.Now()
 	s := c.shardFor(key)
-	value, ok, expired := s.get(key, now, c.accessSeq.Add(1))
+	value, ok, expired := s.get(key, now, c.accessSeq.Add(1), c.cfg.lruRefresh)
 	if expired != nil {
 		c.stats.expired.Add(1)
 		c.globalLen.Add(-1)
@@ -81,7 +81,7 @@ func (c *Cache) SetTTL(key string, value any, ttl time.Duration) {
 	if ttl > 0 {
 		expire = now.Add(ttl)
 	}
-	inserted := c.shardFor(key).set(key, value, expire, now, seq)
+	inserted := c.shardFor(key).set(key, value, expire, now, seq, c.cfg.lruRefresh)
 	if inserted {
 		c.globalLen.Add(1)
 	}
@@ -178,23 +178,37 @@ func (c *Cache) notifyEvicted(item evictItem) {
 	}
 }
 
-// evictOldest 跨分片逐出全局最久未用条目(比较单调访问序号)。
-// 并发竞争导致目标已被删除时返回 false,由调用方重试或停止。
+// evictOldest 跨分片逐出全局最久未用条目:
+// 只读各分片尾部序号原子值选候选,仅锁目标分片。
+// 并发竞争导致目标分片已空时返回 false,由调用方重试或停止。
 func (c *Cache) evictOldest() (evictItem, bool) {
-	var best *entry
-	for _, s := range c.shards {
-		if e := s.tail(); e != nil && (best == nil || e.lastSeq < best.lastSeq) {
-			best = e
+	bestIdx := -1
+	var bestSeq uint64
+	for i, s := range c.shards {
+		seq := s.tailSeq.Load()
+		if seq == 0 {
+			continue
+		}
+		if bestIdx == -1 || seq < bestSeq {
+			bestIdx = i
+			bestSeq = seq
 		}
 	}
-	if best == nil {
+	if bestIdx == -1 {
 		return evictItem{}, false
 	}
-	idx := hashKey(best.key) % uint64(len(c.shards))
-	if !c.shards[idx].removeEntry(best) {
+	s := c.shards[bestIdx]
+	s.mu.Lock()
+	back := s.lru.back()
+	if back == nil {
+		s.mu.Unlock()
 		return evictItem{}, false
 	}
-	return evictItem{key: best.key, value: best.value, reason: EvictCapacity}, true
+	s.lru.remove(back)
+	delete(s.items, back.key)
+	s.updateTailSeqLocked()
+	s.mu.Unlock()
+	return evictItem{key: back.key, value: back.value, reason: EvictCapacity}, true
 }
 
 // emitMetric 输出计数指标(未注入时为空操作)。

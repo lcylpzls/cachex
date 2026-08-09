@@ -11,6 +11,7 @@ const (
 	defaultShards          = 16
 	defaultCapacity        = 10000
 	defaultCleanupInterval = time.Minute
+	defaultLRURefresh      = 1
 )
 
 // EvictReason 是条目被移除的原因。
@@ -43,6 +44,7 @@ type config struct {
 	cleanupInterval time.Duration
 	metrics         Metrics
 	onEvicted       func(key string, value any, reason EvictReason)
+	lruRefresh      int
 }
 
 // defaultConfig 返回默认配置。
@@ -51,6 +53,7 @@ func defaultConfig() config {
 		shards:          defaultShards,
 		capacity:        defaultCapacity,
 		cleanupInterval: defaultCleanupInterval,
+		lruRefresh:      defaultLRURefresh,
 	}
 }
 
@@ -89,6 +92,13 @@ func WithOnEvicted(fn func(key string, value any, reason EvictReason)) Option {
 	return func(c *config) { c.onEvicted = fn }
 }
 
+// WithLRURefresh 设置 LRU 刷新策略:1 表示精确 LRU
+// (每次命中都移动链表,默认);>1 表示采样刷新
+// (每 interval 次命中移动一次,写锁竞争降至 1/interval)。
+func WithLRURefresh(interval int) Option {
+	return func(c *config) { c.lruRefresh = interval }
+}
+
 // validateConfig 校验配置参数。
 func validateConfig(cfg config) error {
 	if cfg.shards <= 0 {
@@ -102,6 +112,9 @@ func validateConfig(cfg config) error {
 	}
 	if cfg.cleanupInterval < 0 {
 		return errx.New(errx.KindInvalid, CodeInvalidConfig, "CleanupInterval 不能为负数")
+	}
+	if cfg.lruRefresh < 1 {
+		return errx.New(errx.KindInvalid, CodeInvalidConfig, "LRURefresh 必须大于等于 1")
 	}
 	return nil
 }

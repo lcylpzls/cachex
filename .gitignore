@@ -4,6 +4,7 @@ coverage.out
 *.exe
 *.test
 bench.log
+.bench-compare/
 
 # AI 工具本地文件(不推送)
 .agents/

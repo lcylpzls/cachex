@@ -335,21 +335,6 @@ func TestEvictOldestEmpty(t *testing.T) {
 	}
 }
 
-func TestRemoveEntryStaleCopy(t *testing.T) {
-	cache, err := New(WithShards(1))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer cache.Close()
-	cache.Set("a", 1)
-	s := cache.shards[0]
-	copy := s.tail()
-	cache.Delete("a")
-	if s.removeEntry(copy) {
-		t.Error("已删除条目的副本不应可移除")
-	}
-}
-
 func TestSetTTLStopsWhenNoVictim(t *testing.T) {
 	cache, err := New(WithCapacity(2))
 	if err != nil {
@@ -377,13 +362,79 @@ func TestEvictOldestStaleVictim(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cache.Close()
-	cache.Set("a", 1)
-	s := cache.shards[0]
-	// 手动替换 map 中的条目,使旧副本失效(模拟并发替换)。
-	s.mu.Lock()
-	s.items["a"] = &entry{key: "a", value: 2, element: s.lru.PushFront(&entry{key: "a"})}
-	s.mu.Unlock()
+	// 模拟并发竞争:tailSeq 显示有候选,但锁内链表已空。
+	cache.shards[0].tailSeq.Store(42)
 	if _, ok := cache.evictOldest(); ok {
-		t.Error("失效副本不应被逐出")
+		t.Error("空链表不应被逐出")
+	}
+}
+
+func TestLRURefreshExact(t *testing.T) {
+	cache, err := New(WithCapacity(2), WithLRURefresh(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cache.Close()
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	if _, ok := cache.Get("a"); !ok {
+		t.Fatal("a 应命中")
+	}
+	cache.Set("c", 3)
+	if _, ok := cache.Get("b"); ok {
+		t.Error("精确模式下 a 已刷新,b 应被逐出")
+	}
+	if _, ok := cache.Get("a"); !ok {
+		t.Error("a 应保留")
+	}
+}
+
+func TestLRURefreshSampled(t *testing.T) {
+	cache, err := New(WithCapacity(2), WithLRURefresh(8))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cache.Close()
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	if _, ok := cache.Get("a"); !ok {
+		t.Fatal("a 应命中")
+	}
+	// 仅 1 次命中,未到采样间隔 8,a 未刷新 → 逐出 a。
+	cache.Set("c", 3)
+	if _, ok := cache.Get("a"); ok {
+		t.Error("采样模式下 a 未刷新应被逐出")
+	}
+	if _, ok := cache.Get("b"); !ok {
+		t.Error("b 应保留")
+	}
+}
+
+func TestLRURefreshSampledAfterInterval(t *testing.T) {
+	cache, err := New(WithCapacity(2), WithLRURefresh(4))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cache.Close()
+	cache.Set("a", 1)
+	cache.Set("b", 2)
+	for i := 0; i < 4; i++ {
+		if _, ok := cache.Get("a"); !ok {
+			t.Fatal("a 应命中")
+		}
+	}
+	// 第 4 次命中触发刷新 → 逐出 b。
+	cache.Set("c", 3)
+	if _, ok := cache.Get("b"); ok {
+		t.Error("采样到间隔后 a 已刷新,b 应被逐出")
+	}
+}
+
+func TestLRURefreshInvalid(t *testing.T) {
+	if _, err := New(WithLRURefresh(0)); err == nil {
+		t.Error("LRURefresh=0 应非法")
+	}
+	if _, err := New(WithLRURefresh(-1)); err == nil {
+		t.Error("LRURefresh 负数应非法")
 	}
 }

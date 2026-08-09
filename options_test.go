@@ -9,6 +9,9 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := defaultConfig()
+	if cfg.lruRefresh != 1 {
+		t.Errorf("默认 LRU 刷新 = %d,want 1", cfg.lruRefresh)
+	}
 	if cfg.shards != defaultShards {
 		t.Errorf("默认分片 = %d,want %d", cfg.shards, defaultShards)
 	}
@@ -34,6 +37,7 @@ func TestOptionsApply(t *testing.T) {
 		WithCleanupInterval(10 * time.Second),
 		WithMetrics(metrics),
 		WithOnEvicted(func(string, any, EvictReason) { evicted++ }),
+		WithLRURefresh(4),
 		nil,
 	}
 	for _, opt := range opts {
@@ -47,6 +51,9 @@ func TestOptionsApply(t *testing.T) {
 	}
 	if cfg.metrics != metrics || cfg.onEvicted == nil {
 		t.Error("观测/回调选项应用失败")
+	}
+	if cfg.lruRefresh != 4 {
+		t.Errorf("LRU 刷新选项应用失败:%d", cfg.lruRefresh)
 	}
 	if evicted != 0 {
 		t.Error("回调不应立即调用")
@@ -65,6 +72,7 @@ func TestValidateConfig(t *testing.T) {
 		{"容量负数", func(c *config) { c.capacity = -1 }, true},
 		{"默认 TTL 负数", func(c *config) { c.defaultTTL = -1 }, true},
 		{"清理间隔负数", func(c *config) { c.cleanupInterval = -1 }, true},
+		{"LRU 刷新为 0", func(c *config) { c.lruRefresh = 0 }, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

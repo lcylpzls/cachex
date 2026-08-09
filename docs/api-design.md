@@ -57,6 +57,7 @@ func WithDefaultTTL(d time.Duration) Option // 默认不过期,负数非法
 func WithCleanupInterval(d time.Duration) Option // 默认 1 分钟,0 关闭后台清理
 func WithMetrics(m Metrics) Option      // 默认 no-op
 func WithOnEvicted(fn func(key string, value any, reason EvictReason)) Option
+func WithLRURefresh(interval int) Option // v0.2.0:1=精确(默认),>1=采样刷新
 ```
 
 ## 4. 过期与清理
@@ -112,6 +113,13 @@ type Metrics interface {
 指标名:`cachex.hits` / `cachex.misses` / `cachex.sets` /
 `cachex.deletes` / `cachex.evictions` / `cachex.expired`;
 `GetOrSet` 另记录 `cachex.loader_duration`(回源耗时观测)。
+
+## 7.5 LRU 刷新策略(v0.2.0)
+
+- `WithLRURefresh(1)`(默认):每次命中都刷新链表位置,精确 LRU;
+- `WithLRURefresh(n)`(n > 1):每 n 次命中才移动链表一次,
+  写锁竞争降至 1/n,LRU 为近似语义(误差随 n 增大);
+- 逐出与跨分片比较始终基于单调访问序号,与刷新粒度无关。
 
 ## 7. 已确认决策
 

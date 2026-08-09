@@ -20,6 +20,20 @@ func BenchmarkGetHit(b *testing.B) {
 	}
 }
 
+// BenchmarkGetHitSampled 基准:采样刷新(interval=8)命中读取。
+func BenchmarkGetHitSampled(b *testing.B) {
+	cache, err := New(WithLRURefresh(8))
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer cache.Close()
+	cache.Set("key", 1)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = cache.Get("key")
+	}
+}
+
 // BenchmarkSet 基准:写入固定键。
 func BenchmarkSet(b *testing.B) {
 	cache, err := New()
