@@ -45,6 +45,7 @@ type config struct {
 	metrics         Metrics
 	onEvicted       func(key string, value any, reason EvictReason)
 	lruRefresh      int
+	traceHook       TraceHook
 }
 
 // defaultConfig 返回默认配置。
@@ -84,6 +85,11 @@ func WithCleanupInterval(d time.Duration) Option {
 // WithMetrics 注入指标钩子,空表示关闭指标(默认)。
 func WithMetrics(m Metrics) Option {
 	return func(c *config) { c.metrics = m }
+}
+
+// WithTraceHook 设置回源加载链路追踪钩子。
+func WithTraceHook(h TraceHook) Option {
+	return func(c *config) { c.traceHook = h }
 }
 
 // WithOnEvicted 设置逐出回调:容量逐出与过期清理时在锁外调用,

@@ -2,6 +2,15 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v1.0.3] - 2026-08-10
+
+### 新增
+
+- `TraceHook` 回源加载链路追踪钩子（零依赖接口 + `WithTraceHook`）：
+  GetOrSet 实际回源时自动埋点（cachex.key / cachex.operation 属性），
+  命中缓存不产生 span，由 tracex 等外部适配器接入；
+- 成功/失败/命中路径埋点测试，覆盖率保持 100%。
+
 ## [Unreleased]
 
 ### 规划

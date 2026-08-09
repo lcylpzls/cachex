@@ -51,7 +51,9 @@ func GetOrSet(ctx context.Context, c *Cache, key string, ttl time.Duration,
 	g.mu.Unlock()
 
 	start := time.Now()
-	value, err := loader(ctx)
+	traceCtx, end := c.startTrace(ctx, "cachex.load", key)
+	value, err := loader(traceCtx)
+	end(err)
 	if c.cfg.metrics != nil {
 		c.cfg.metrics.ObserveDuration(metricLoaderDur, time.Since(start).Seconds())
 	}
@@ -67,4 +69,15 @@ func GetOrSet(ctx context.Context, c *Cache, key string, ttl time.Duration,
 		c.SetTTL(key, value, ttl)
 	}
 	return value, err
+}
+
+// startTrace 开始回源加载链路（无钩子时 no-op）。
+func (c *Cache) startTrace(ctx context.Context, name, key string) (context.Context, func(error)) {
+	if c.cfg.traceHook == nil {
+		return ctx, func(error) {}
+	}
+	return c.cfg.traceHook.Start(ctx, name,
+		TraceAttr{Key: "cachex.key", Value: key},
+		TraceAttr{Key: "cachex.operation", Value: "load"},
+	)
 }
