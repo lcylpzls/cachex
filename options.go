@@ -46,6 +46,7 @@ type config struct {
 	onEvicted       func(key string, value any, reason EvictReason)
 	lruRefresh      int
 	traceHook       TraceHook
+	eventHook       EventHook
 }
 
 // defaultConfig 返回默认配置。
@@ -90,6 +91,11 @@ func WithMetrics(m Metrics) Option {
 // WithTraceHook 设置回源加载链路追踪钩子。
 func WithTraceHook(h TraceHook) Option {
 	return func(c *config) { c.traceHook = h }
+}
+
+// WithEventHook 设置事件钩子；不设置时 no-op。
+func WithEventHook(h EventHook) Option {
+	return func(c *config) { c.eventHook = h }
 }
 
 // WithOnEvicted 设置逐出回调:容量逐出与过期清理时在锁外调用,

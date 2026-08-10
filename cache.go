@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -17,6 +18,7 @@ type Cache struct {
 	loads     *loadGroup
 	stopCh    chan struct{}
 	stopOnce  sync.Once
+	eventHook EventHook
 }
 
 // New 创建缓存。配置非法时返回 CACHEX_INVALID_CONFIG。
@@ -31,10 +33,11 @@ func New(opts ...Option) (*Cache, error) {
 		return nil, err
 	}
 	c := &Cache{
-		cfg:    cfg,
-		shards: make([]*shard, cfg.shards),
-		loads:  newLoadGroup(),
-		stopCh: make(chan struct{}),
+		cfg:       cfg,
+		shards:    make([]*shard, cfg.shards),
+		loads:     newLoadGroup(),
+		stopCh:    make(chan struct{}),
+		eventHook: cfg.eventHook,
 	}
 	for i := range c.shards {
 		c.shards[i] = newShard()
@@ -60,9 +63,11 @@ func (c *Cache) Get(key string) (any, bool) {
 	if ok {
 		c.stats.hits.Add(1)
 		c.emitMetric(metricHits)
+		c.emitEvent("get_hit", key, nil)
 	} else {
 		c.stats.misses.Add(1)
 		c.emitMetric(metricMisses)
+		c.emitEvent("get_miss", key, nil)
 	}
 	return value, ok
 }
@@ -102,6 +107,7 @@ func (c *Cache) SetTTL(key string, value any, ttl time.Duration) {
 		c.emitMetric(metricEvictions)
 		c.notifyEvicted(item)
 	}
+	c.emitEvent("set", key, nil)
 }
 
 // Delete 删除条目,返回是否命中。
@@ -110,6 +116,7 @@ func (c *Cache) Delete(key string) bool {
 		c.stats.deletes.Add(1)
 		c.globalLen.Add(-1)
 		c.emitMetric(metricDeletes)
+		c.emitEvent("delete", key, nil)
 		return true
 	}
 	return false
@@ -121,6 +128,7 @@ func (c *Cache) Clear() {
 		s.clear()
 	}
 	c.globalLen.Store(0)
+	c.emitEvent("clear", "", nil)
 }
 
 // Len 返回当前条目数(全局原子计数)。
@@ -176,6 +184,7 @@ func (c *Cache) notifyEvicted(item evictItem) {
 	if c.cfg.onEvicted != nil {
 		c.cfg.onEvicted(item.key, item.value, item.reason)
 	}
+	c.emitEvent("evict", item.key, nil)
 }
 
 // evictOldest 跨分片逐出全局最久未用条目:
@@ -216,4 +225,16 @@ func (c *Cache) emitMetric(name string) {
 	if c.cfg.metrics != nil {
 		c.cfg.metrics.IncCounter(name)
 	}
+}
+
+// emitEvent 发送缓存事件（无钩子时 no-op）。
+func (c *Cache) emitEvent(action, key string, err error) {
+	if c.eventHook == nil {
+		return
+	}
+	c.eventHook.OnCacheEvent(context.Background(), CacheEvent{
+		Action: action,
+		Key:    key,
+		Err:    err,
+	})
 }

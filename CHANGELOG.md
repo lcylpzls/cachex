@@ -2,6 +2,19 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v1.2.0] - 2026-08-10
+
+### 新增
+
+- `EventHook` 事件钩子（零依赖可选接口，默认 no-op）：
+  get_hit / get_miss / set / delete / clear / evict 操作结束时触发
+  `CacheEvent`，由 eventx 等外部适配器接入；
+- `WithEventHook` 选项注入。
+
+### 质量
+
+- 根包语句覆盖率 100%；race / vet / staticcheck / fuzz / govulncheck 全绿。
+
 ## [v1.1.3] - 2026-08-10
 
 ### 变更
