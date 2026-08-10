@@ -1,4 +1,4 @@
-package cachex
+package core
 
 import "github.com/lcylpzls/errx"
 

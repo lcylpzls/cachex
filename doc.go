@@ -1,4 +1,3 @@
-// Package cachex 提供自研高性能内存缓存库:
-// 并发分片、精确 LRU 淘汰、独立 TTL 过期与 Singleflight 击穿防护,
-// 与 errx / logx 生态打通,零第三方依赖。
+// Package cachex 提供分片并发缓存基座（TTL、LRU、事件、指标与链路钩子）。
+// 实现主体位于 internal/core，本包仅暴露稳定公开 API。
 package cachex
