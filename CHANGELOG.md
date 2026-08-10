@@ -2,6 +2,14 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v1.3.4] - 2026-08-10
+
+### 变更
+
+- Metrics 契约统一为 `metricsx.Sink`（破坏性：注入实现需满足 Sink 协议）；
+- Trace 契约统一为 `tracex.TraceHook`（类型别名，调用点不变）；
+- 依赖升级：tracex v1.0.4、metricsx v1.5.4、errx v1.5.7、validx v1.2.5、testx v1.4.5。
+
 ## [v1.3.3] - 2026-08-10
 
 ### 变更

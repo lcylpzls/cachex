@@ -55,7 +55,7 @@ func GetOrSet(ctx context.Context, c *Cache, key string, ttl time.Duration,
 	value, err := loader(traceCtx)
 	end(err)
 	if c.cfg.metrics != nil {
-		c.cfg.metrics.ObserveDuration(metricLoaderDur, time.Since(start).Seconds())
+		c.cfg.metrics.ObserveDuration(metricLoaderDur, time.Since(start).Seconds(), nil)
 	}
 	call.value = value
 	call.err = err

@@ -223,7 +223,7 @@ func (c *Cache) evictOldest() (evictItem, bool) {
 // emitMetric 输出计数指标(未注入时为空操作)。
 func (c *Cache) emitMetric(name string) {
 	if c.cfg.metrics != nil {
-		c.cfg.metrics.IncCounter(name)
+		c.cfg.metrics.IncCounter(name, nil)
 	}
 }
 

@@ -16,7 +16,7 @@ func newFakeMetrics() *fakeMetrics {
 	}
 }
 
-func (m *fakeMetrics) IncCounter(name string, labels ...string) {
+func (m *fakeMetrics) IncCounter(name string, labels []string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	key := name
@@ -26,7 +26,17 @@ func (m *fakeMetrics) IncCounter(name string, labels ...string) {
 	m.counters[key]++
 }
 
-func (m *fakeMetrics) ObserveDuration(name string, seconds float64, labels ...string) {
+func (m *fakeMetrics) AddCounter(name string, delta float64, labels []string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := name
+	for _, l := range labels {
+		key += "|" + l
+	}
+	m.counters[key] += int(delta)
+}
+
+func (m *fakeMetrics) ObserveDuration(name string, seconds float64, labels []string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	key := name
@@ -34,6 +44,14 @@ func (m *fakeMetrics) ObserveDuration(name string, seconds float64, labels ...st
 		key += "|" + l
 	}
 	m.durations[key] = append(m.durations[key], seconds)
+}
+
+func (m *fakeMetrics) AddGauge(name string, delta float64, labels []string) {}
+
+func (m *fakeMetrics) SetGauge(name string, value float64, labels []string) {}
+
+func (m *fakeMetrics) RegisterMetric(name, help string, labelNames []string) error {
+	return nil
 }
 
 func (m *fakeMetrics) counter(name string) int {
