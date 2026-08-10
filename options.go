@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/lcylpzls/errx"
+	"github.com/lcylpzls/validx"
 )
 
 // 默认配置:生产实践取值。
@@ -111,22 +112,31 @@ func WithLRURefresh(interval int) Option {
 	return func(c *config) { c.lruRefresh = interval }
 }
 
-// validateConfig 校验配置参数。
+// init 注册配置校验规则到 validx 全局规则表，错误码保持 cachex 语义。
+func init() {
+	_ = validx.RegisterRule("cachex_config", func(value any, param, path string) error {
+		// 内部调用保证 value 为 config。
+		cfg := value.(config)
+		if cfg.shards <= 0 {
+			return errx.NewCode(CodeInvalidConfig, "Shards 必须大于 0")
+		}
+		if cfg.capacity < 0 {
+			return errx.NewCode(CodeInvalidConfig, "Capacity 不能为负数")
+		}
+		if cfg.defaultTTL < 0 {
+			return errx.NewCode(CodeInvalidConfig, "DefaultTTL 不能为负数")
+		}
+		if cfg.cleanupInterval < 0 {
+			return errx.NewCode(CodeInvalidConfig, "CleanupInterval 不能为负数")
+		}
+		if cfg.lruRefresh < 1 {
+			return errx.NewCode(CodeInvalidConfig, "LRURefresh 必须大于等于 1")
+		}
+		return nil
+	})
+}
+
+// validateConfig 校验配置参数（统一走 validx 规则）。
 func validateConfig(cfg config) error {
-	if cfg.shards <= 0 {
-		return errx.NewCode(CodeInvalidConfig, "Shards 必须大于 0")
-	}
-	if cfg.capacity < 0 {
-		return errx.NewCode(CodeInvalidConfig, "Capacity 不能为负数")
-	}
-	if cfg.defaultTTL < 0 {
-		return errx.NewCode(CodeInvalidConfig, "DefaultTTL 不能为负数")
-	}
-	if cfg.cleanupInterval < 0 {
-		return errx.NewCode(CodeInvalidConfig, "CleanupInterval 不能为负数")
-	}
-	if cfg.lruRefresh < 1 {
-		return errx.NewCode(CodeInvalidConfig, "LRURefresh 必须大于等于 1")
-	}
-	return nil
+	return validx.ValidateField(cfg, "cachex_config")
 }
