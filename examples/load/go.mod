@@ -1,9 +1,9 @@
 module github.com/lcylpzls/cachex/examples/load
 
-go 1.26
+go 1.26.5
 
 require github.com/lcylpzls/cachex v0.0.0
 
-require github.com/lcylpzls/errx v1.3.1 // indirect
+require github.com/lcylpzls/errx v1.4.0 // indirect
 
 replace github.com/lcylpzls/cachex => ../..
