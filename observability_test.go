@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	testx "github.com/lcylpzls/testx"
 	"testing"
 	"time"
 )
@@ -8,9 +9,8 @@ import (
 func TestMetricsCounters(t *testing.T) {
 	m := newFakeMetrics()
 	cache, err := New(WithMetrics(m), WithCapacity(2))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 
 	cache.Set("a", 1)
@@ -44,9 +44,8 @@ func TestMetricsCounters(t *testing.T) {
 
 func TestMetricsNoop(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("k", "v")
 	_, _ = cache.Get("k")
@@ -56,9 +55,8 @@ func TestMetricsNoop(t *testing.T) {
 
 func TestStatsSnapshot(t *testing.T) {
 	cache, err := New(WithCapacity(100))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	_, _ = cache.Get("a")

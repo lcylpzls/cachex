@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	testx "github.com/lcylpzls/testx"
 	"testing"
 	"time"
 )
@@ -11,9 +12,8 @@ func FuzzTTL(f *testing.F) {
 	f.Add("", int64(-1), int64(-1))
 	f.Fuzz(func(t *testing.T, key string, ttlNs int64, seed int64) {
 		cache, err := New(WithCapacity(16))
-		if err != nil {
-			t.Fatal(err)
-		}
+		testx.RequireNoError(t, err)
+
 		defer cache.Close()
 		for i := 0; i < 20; i++ {
 			ttl := time.Duration(ttlNs + int64(i)*seed)
@@ -40,9 +40,8 @@ func FuzzShard(f *testing.F) {
 	f.Add(string([]byte{0, 1, 2, 255}))
 	f.Fuzz(func(t *testing.T, key string) {
 		cache, err := New(WithShards(16))
-		if err != nil {
-			t.Fatal(err)
-		}
+		testx.RequireNoError(t, err)
+
 		defer cache.Close()
 		first := cache.shardFor(key)
 		for i := 0; i < 16; i++ {

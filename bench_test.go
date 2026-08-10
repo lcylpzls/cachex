@@ -2,6 +2,7 @@ package cachex
 
 import (
 	"context"
+	testx "github.com/lcylpzls/testx"
 	"strconv"
 	"testing"
 )
@@ -9,9 +10,8 @@ import (
 // BenchmarkGetHit 基准:16 分片命中读取。
 func BenchmarkGetHit(b *testing.B) {
 	cache, err := New()
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	cache.Set("key", 1)
 	b.ResetTimer()
@@ -23,9 +23,8 @@ func BenchmarkGetHit(b *testing.B) {
 // BenchmarkGetHitSampled 基准:采样刷新(interval=8)命中读取。
 func BenchmarkGetHitSampled(b *testing.B) {
 	cache, err := New(WithLRURefresh(8))
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	cache.Set("key", 1)
 	b.ResetTimer()
@@ -37,9 +36,8 @@ func BenchmarkGetHitSampled(b *testing.B) {
 // BenchmarkSet 基准:写入固定键。
 func BenchmarkSet(b *testing.B) {
 	cache, err := New()
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -50,9 +48,8 @@ func BenchmarkSet(b *testing.B) {
 // BenchmarkGetOrSetHit 基准:GetOrSet 命中路径。
 func BenchmarkGetOrSetHit(b *testing.B) {
 	cache, err := New()
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	cache.Set("key", 1)
 	b.ResetTimer()
@@ -66,9 +63,8 @@ func BenchmarkGetOrSetHit(b *testing.B) {
 // BenchmarkEviction 基准:容量逐出循环。
 func BenchmarkEviction(b *testing.B) {
 	cache, err := New(WithCapacity(1000))
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -79,9 +75,8 @@ func BenchmarkEviction(b *testing.B) {
 // BenchmarkShardedSet 基准:16 分片分散写入。
 func BenchmarkShardedSet(b *testing.B) {
 	cache, err := New(WithShards(16))
-	if err != nil {
-		b.Fatal(err)
-	}
+	testx.RequireNoError(b, err)
+
 	defer cache.Close()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

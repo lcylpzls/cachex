@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	testx "github.com/lcylpzls/testx"
 	"sync"
 	"testing"
 	"time"
@@ -8,9 +9,8 @@ import (
 
 func TestSetGet(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("k", "v")
 	v, ok := cache.Get("k")
@@ -25,9 +25,8 @@ func TestSetGet(t *testing.T) {
 
 func TestGetMiss(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	if v, ok := cache.Get("nope"); ok || v != nil {
 		t.Errorf("未命中应返回 nil,false:got %v,%v", v, ok)
@@ -44,9 +43,8 @@ func TestSetTTLExpired(t *testing.T) {
 			reasons = append(reasons, reason)
 		}
 	}))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.SetTTL("k", "v", 10*time.Millisecond)
 	time.Sleep(30 * time.Millisecond)
@@ -64,9 +62,8 @@ func TestSetTTLExpired(t *testing.T) {
 
 func TestSetTTLNonPositive(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	for _, ttl := range []time.Duration{0, -time.Second} {
 		cache.SetTTL("k", "v", ttl)
@@ -78,9 +75,8 @@ func TestSetTTLNonPositive(t *testing.T) {
 
 func TestSetUpdate(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("k", 1)
 	cache.Set("k", 2)
@@ -102,9 +98,8 @@ func TestLRUEviction(t *testing.T) {
 			evicted = append(evicted, key)
 		}
 	}))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -126,9 +121,8 @@ func TestLRUEviction(t *testing.T) {
 
 func TestLRUOrderRefreshedByGet(t *testing.T) {
 	cache, err := New(WithCapacity(2))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -146,9 +140,8 @@ func TestLRUOrderRefreshedByGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("k", "v")
 	if !cache.Delete("k") {
@@ -168,9 +161,8 @@ func TestDelete(t *testing.T) {
 func TestClear(t *testing.T) {
 	var evicted int
 	cache, err := New(WithOnEvicted(func(string, any, EvictReason) { evicted++ }))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -188,9 +180,8 @@ func TestClear(t *testing.T) {
 
 func TestLenAcrossShards(t *testing.T) {
 	cache, err := New(WithShards(4))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	for i := 0; i < 100; i++ {
 		cache.Set(string(rune('a'+i%26))+string(rune('0'+i)), i)
@@ -207,9 +198,8 @@ func TestCleanup(t *testing.T) {
 			expiredKeys = append(expiredKeys, key)
 		}
 	}))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("keep", 1)
 	cache.SetTTL("gone1", 2, 5*time.Millisecond)
@@ -232,9 +222,8 @@ func TestCleanup(t *testing.T) {
 
 func TestCleanupNoExpired(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Cleanup()
@@ -245,9 +234,8 @@ func TestCleanupNoExpired(t *testing.T) {
 
 func TestBackgroundCleanup(t *testing.T) {
 	cache, err := New(WithCleanupInterval(15 * time.Millisecond))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.SetTTL("k", "v", 5*time.Millisecond)
 	deadline := time.Now().Add(2 * time.Second)
@@ -261,9 +249,8 @@ func TestBackgroundCleanup(t *testing.T) {
 
 func TestCloseStopsCleanup(t *testing.T) {
 	cache, err := New(WithCleanupInterval(10 * time.Millisecond))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	cache.SetTTL("k", "v", 5*time.Millisecond)
 	cache.Close()
 	cache.Close() // 幂等
@@ -284,9 +271,8 @@ func TestCloseStopsCleanup(t *testing.T) {
 
 func TestConcurrentOperations(t *testing.T) {
 	cache, err := New(WithCapacity(1000), WithCleanupInterval(10*time.Millisecond))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	var wg sync.WaitGroup
 	for i := 0; i < 8; i++ {
@@ -312,9 +298,8 @@ func TestConcurrentOperations(t *testing.T) {
 
 func TestHashKeyDeterministic(t *testing.T) {
 	cache, err := New(WithShards(16))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	first := cache.shardFor("user:1")
 	for i := 0; i < 100; i++ {
@@ -326,9 +311,8 @@ func TestHashKeyDeterministic(t *testing.T) {
 
 func TestEvictOldestEmpty(t *testing.T) {
 	cache, err := New(WithCapacity(10))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	if _, ok := cache.evictOldest(); ok {
 		t.Error("空缓存不应逐出条目")
@@ -337,9 +321,8 @@ func TestEvictOldestEmpty(t *testing.T) {
 
 func TestSetTTLStopsWhenNoVictim(t *testing.T) {
 	cache, err := New(WithCapacity(2))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	// 模拟全局计数异常:缓存为空但计数超限,逐出应安全停止。
 	cache.globalLen.Store(3)
@@ -358,9 +341,8 @@ func TestSetTTLStopsWhenNoVictim(t *testing.T) {
 
 func TestEvictOldestStaleVictim(t *testing.T) {
 	cache, err := New(WithShards(1), WithCapacity(10))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	// 模拟并发竞争:tailSeq 显示有候选,但锁内链表已空。
 	cache.shards[0].tailSeq.Store(42)
@@ -371,9 +353,8 @@ func TestEvictOldestStaleVictim(t *testing.T) {
 
 func TestLRURefreshExact(t *testing.T) {
 	cache, err := New(WithCapacity(2), WithLRURefresh(1))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -391,9 +372,8 @@ func TestLRURefreshExact(t *testing.T) {
 
 func TestLRURefreshSampled(t *testing.T) {
 	cache, err := New(WithCapacity(2), WithLRURefresh(8))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)
@@ -412,9 +392,8 @@ func TestLRURefreshSampled(t *testing.T) {
 
 func TestLRURefreshSampledAfterInterval(t *testing.T) {
 	cache, err := New(WithCapacity(2), WithLRURefresh(4))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("a", 1)
 	cache.Set("b", 2)

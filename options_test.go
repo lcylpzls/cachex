@@ -1,6 +1,7 @@
 package cachex
 
 import (
+	testx "github.com/lcylpzls/testx"
 	"testing"
 	"time"
 
@@ -8,9 +9,8 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	if Version != "v1.0.1" {
-		t.Errorf("Version = %s,want v1.0.1", Version)
-	}
+	testx.Equal(t, Version, "v1.1.0")
+
 }
 
 func TestDefaultConfig(t *testing.T) {
@@ -18,15 +18,12 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.lruRefresh != 1 {
 		t.Errorf("默认 LRU 刷新 = %d,want 1", cfg.lruRefresh)
 	}
-	if cfg.shards != defaultShards {
-		t.Errorf("默认分片 = %d,want %d", cfg.shards, defaultShards)
-	}
-	if cfg.capacity != defaultCapacity {
-		t.Errorf("默认容量 = %d,want %d", cfg.capacity, defaultCapacity)
-	}
-	if cfg.cleanupInterval != defaultCleanupInterval {
-		t.Errorf("默认清理间隔 = %v,want %v", cfg.cleanupInterval, defaultCleanupInterval)
-	}
+	testx.Equal(t, cfg.shards, defaultShards)
+
+	testx.Equal(t, cfg.capacity, defaultCapacity)
+
+	testx.Equal(t, cfg.cleanupInterval, defaultCleanupInterval)
+
 	if cfg.defaultTTL != 0 || cfg.metrics != nil || cfg.onEvicted != nil {
 		t.Error("默认 TTL/观测/回调应为关闭")
 	}
@@ -86,17 +83,15 @@ func TestValidateConfig(t *testing.T) {
 			tc.mutate(&cfg)
 			err := validateConfig(cfg)
 			if tc.wantErr {
-				if err == nil {
-					t.Fatal("应返回错误")
-				}
+				testx.RequireError(t, err)
+
 				if code, _ := errx.CodeOf(err); code != CodeInvalidConfig {
 					t.Errorf("错误码 = %s,want %s", code, CodeInvalidConfig)
 				}
 				return
 			}
-			if err != nil {
-				t.Fatalf("不应返回错误:%v", err)
-			}
+			testx.RequireNoError(t, err)
+
 		})
 	}
 }
@@ -119,20 +114,17 @@ func TestEvictReasonString(t *testing.T) {
 
 func TestNewNilOptions(t *testing.T) {
 	cache, err := New(nil)
-	if err != nil {
-		t.Fatalf("nil 选项应被忽略:%v", err)
-	}
-	if cache.cfg.shards != defaultShards {
-		t.Error("nil 选项不应改变默认配置")
-	}
+	testx.RequireNoError(t, err)
+
+	testx.Equal(t, cache.cfg.shards, defaultShards)
+
 	cache.Close()
 }
 
 func TestNewInvalidConfig(t *testing.T) {
 	_, err := New(WithShards(0))
-	if err == nil {
-		t.Fatal("非法分片应返回错误")
-	}
+	testx.RequireError(t, err)
+
 	if code, _ := errx.CodeOf(err); code != CodeInvalidConfig {
 		t.Errorf("错误码 = %s,want %s", code, CodeInvalidConfig)
 	}

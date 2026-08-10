@@ -3,6 +3,7 @@ package cachex
 import (
 	"context"
 	"errors"
+	testx "github.com/lcylpzls/testx"
 	"sync"
 	"testing"
 	"time"
@@ -49,9 +50,8 @@ func (h *fakeTraceHook) snapshot() []traceCall {
 func TestTraceHook(t *testing.T) {
 	hook := &fakeTraceHook{}
 	c, err := New(WithTraceHook(hook))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	ctx := context.Background()
 	v, err := GetOrSet(ctx, c, "k1", time.Minute, func(context.Context) (any, error) {
 		return "v1", nil

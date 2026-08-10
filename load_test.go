@@ -3,6 +3,7 @@ package cachex
 import (
 	"context"
 	"errors"
+	testx "github.com/lcylpzls/testx"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -11,9 +12,8 @@ import (
 
 func TestGetOrSetHit(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	cache.Set("k", "cached")
 	var loads atomic.Int32
@@ -21,12 +21,10 @@ func TestGetOrSetHit(t *testing.T) {
 		loads.Add(1)
 		return "loaded", nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if v != "cached" {
-		t.Errorf("命中应返回缓存值:%v", v)
-	}
+	testx.RequireNoError(t, err)
+
+	testx.Equal(t, v, "cached")
+
 	if loads.Load() != 0 {
 		t.Errorf("命中不应调用 loader:%d", loads.Load())
 	}
@@ -34,9 +32,8 @@ func TestGetOrSetHit(t *testing.T) {
 
 func TestGetOrSetMissLoads(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	v, err := GetOrSet(context.Background(), cache, "k", time.Minute, func(context.Context) (any, error) {
 		return "loaded", nil
@@ -54,9 +51,8 @@ func TestGetOrSetMissLoads(t *testing.T) {
 
 func TestGetOrSetConcurrentSingleLoad(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	start := make(chan struct{})
 	var loads atomic.Int32
@@ -85,9 +81,8 @@ func TestGetOrSetConcurrentSingleLoad(t *testing.T) {
 
 func TestGetOrSetLoaderError(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	loaderErr := errors.New("回源失败")
 	var loads atomic.Int32
@@ -105,10 +100,9 @@ func TestGetOrSetLoaderError(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	for i, err := range results {
-		if !errors.Is(err, loaderErr) {
-			t.Errorf("调用者 %d 错误不符:%v", i, err)
-		}
+	for _, err := range results {
+		testx.ErrorIs(t, err, loaderErr)
+
 	}
 	if loads.Load() != 1 {
 		t.Errorf("失败也应合并回源:%d", loads.Load())
@@ -121,9 +115,8 @@ func TestGetOrSetLoaderError(t *testing.T) {
 		loads.Add(1)
 		return "ok", nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	if loads.Load() != 2 {
 		t.Errorf("失败后应可重试:%d", loads.Load())
 	}
@@ -131,9 +124,8 @@ func TestGetOrSetLoaderError(t *testing.T) {
 
 func TestGetOrSetWaiterCancel(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	release := make(chan struct{})
 	done := make(chan struct{})
@@ -160,9 +152,8 @@ func TestGetOrSetWaiterCancel(t *testing.T) {
 	_, err = GetOrSet(ctx, cache, "slow", time.Minute, func(context.Context) (any, error) {
 		return nil, errors.New("不应执行")
 	})
-	if err == nil {
-		t.Fatal("等待者取消应返回错误")
-	}
+	testx.RequireError(t, err)
+
 	close(release)
 	<-done
 	if v, ok := cache.Get("slow"); !ok || v != "value" {
@@ -172,9 +163,8 @@ func TestGetOrSetWaiterCancel(t *testing.T) {
 
 func TestGetOrSetNilContext(t *testing.T) {
 	cache, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	//lint:ignore SA1012 有意覆盖 nil context 防护逻辑
 	v, err := GetOrSet(nil, cache, "k", time.Minute, func(context.Context) (any, error) {
@@ -188,9 +178,8 @@ func TestGetOrSetNilContext(t *testing.T) {
 func TestGetOrSetLoaderDurationMetric(t *testing.T) {
 	m := newFakeMetrics()
 	cache, err := New(WithMetrics(m))
-	if err != nil {
-		t.Fatal(err)
-	}
+	testx.RequireNoError(t, err)
+
 	defer cache.Close()
 	if _, err := GetOrSet(context.Background(), cache, "k", time.Minute, func(context.Context) (any, error) {
 		return "v", nil
@@ -208,9 +197,8 @@ func FuzzLoader(f *testing.F) {
 	f.Add("", int64(-1))
 	f.Fuzz(func(t *testing.T, key string, seed int64) {
 		cache, err := New(WithShards(4), WithCapacity(64))
-		if err != nil {
-			t.Fatal(err)
-		}
+		testx.RequireNoError(t, err)
+
 		defer cache.Close()
 		var wg sync.WaitGroup
 		for i := 0; i < 4; i++ {
