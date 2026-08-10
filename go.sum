@@ -1,6 +1,6 @@
 github.com/lcylpzls/errx v1.5.4 h1:xEQRgYJEF7bArQqRe70yHDk+W17OcXSVo8g+knSGr70=
 github.com/lcylpzls/errx v1.5.4/go.mod h1:Eo26wXcmV2hdMB1CJvhFc4zLZr4aNutlvakzwTzwncM=
-github.com/lcylpzls/testx v1.2.1 h1:Yu1JQqyYobF/l4dM3MkK6fmeR+iBZRXHYdFrogkZmLM=
-github.com/lcylpzls/testx v1.2.1/go.mod h1:RQM/Rpxw2CfbZHXrChB9Mq+kMryQ+fQy10jHd9CeQTc=
-github.com/lcylpzls/validx v1.2.2 h1:q6ZxN1qdTSaFfGTGoyCi33sluWfwCLDx3hd5xpmidp0=
-github.com/lcylpzls/validx v1.2.2/go.mod h1:HAy1xjuJRfjp1T+7c7aX6BYBrsiDSuQbvgDTOjwAug8=
+github.com/lcylpzls/testx v1.4.2 h1:AMbPE4uEnFrK8Glra9P78FkHaqxYyQHim/cme3+vOlw=
+github.com/lcylpzls/testx v1.4.2/go.mod h1:LtRgi54rpw6k5Pomw2iczOfGsRXBroKGml1VeiZUZbI=
+github.com/lcylpzls/validx v1.2.3 h1:546qrTF86yW1QVIlP+JiJqFrg9YH54SH5BS7j/+OIJI=
+github.com/lcylpzls/validx v1.2.3/go.mod h1:HAy1xjuJRfjp1T+7c7aX6BYBrsiDSuQbvgDTOjwAug8=
