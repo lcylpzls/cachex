@@ -2,6 +2,7 @@ package cachex
 
 import (
 	"context"
+	"github.com/lcylpzls/testx"
 	"strings"
 	"sync"
 	"testing"
@@ -15,9 +16,7 @@ func TestEventHook(t *testing.T) {
 		WithCleanupInterval(0),
 		WithEventHook(hook),
 	)
-	if err != nil {
-		t.Fatalf("New 失败：%v", err)
-	}
+	testx.RequireNoError(t, err)
 	defer c.Close()
 
 	c.Set("a", 1)
@@ -50,9 +49,7 @@ func TestEventHookExpired(t *testing.T) {
 		WithCleanupInterval(10*time.Millisecond),
 		WithEventHook(hook),
 	)
-	if err != nil {
-		t.Fatalf("New 失败：%v", err)
-	}
+	testx.RequireNoError(t, err)
 	defer c.Close()
 	c.SetTTL("k", 1, time.Millisecond)
 	time.Sleep(30 * time.Millisecond)
@@ -71,9 +68,7 @@ func TestEventHookExpired(t *testing.T) {
 
 func TestNoEventHook(t *testing.T) {
 	c, err := New()
-	if err != nil {
-		t.Fatalf("New 失败：%v", err)
-	}
+	testx.RequireNoError(t, err)
 	defer c.Close()
 	c.Set("k", 1)
 	_, _ = c.Get("k")
