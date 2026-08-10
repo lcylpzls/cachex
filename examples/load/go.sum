@@ -1,6 +1,8 @@
-github.com/lcylpzls/cachex v1.2.0 h1:6ey6/198FaHeAFOqg++MlEa8F2h0RNtnF/LKfbQXzNU=
-github.com/lcylpzls/cachex v1.2.0/go.mod h1:fGJlU7OE/D23JuR75KeEqrplDxqBOA8FPZ41An2dhdA=
-github.com/lcylpzls/errx v1.4.0 h1:CdlMZuf2F49PCyUkRROf11i1gHcAI38GTG+kxMAGQWI=
-github.com/lcylpzls/errx v1.4.0/go.mod h1:+GcqVS4+6iuHvCELjwpsc1RKrdEtSNz00xq0lFrgdgI=
-github.com/lcylpzls/testx v1.2.1 h1:Yu1JQqyYobF/l4dM3MkK6fmeR+iBZRXHYdFrogkZmLM=
-github.com/lcylpzls/testx v1.2.1/go.mod h1:RQM/Rpxw2CfbZHXrChB9Mq+kMryQ+fQy10jHd9CeQTc=
+github.com/lcylpzls/cachex v1.3.3 h1:BYOE/NroGaqX3s7nN9Qa1cwdONItjgVPfCsiYwMYU2A=
+github.com/lcylpzls/cachex v1.3.3/go.mod h1:R4eYFq+523gsuVw1b0QQbOXKkCBzxvyi588OYAujlMg=
+github.com/lcylpzls/errx v1.5.5 h1:zM4NcWPHmtwhdxjaw8abzryZNgcjGc4qs57QSc5wpLU=
+github.com/lcylpzls/errx v1.5.5/go.mod h1:mvjTnKj5gDpNtj/0pftC/ctWH+P1NrNOl1asrij//RM=
+github.com/lcylpzls/testx v1.4.3 h1:0eDjxIyqy1ffpNCNOXBJzogUGRaNBsOgU8BcIs5BUlc=
+github.com/lcylpzls/testx v1.4.3/go.mod h1:y+UKgHdKABet7RS3NVRejcWbyF4fXYZ8nmOIeNTWn8I=
+github.com/lcylpzls/validx v1.2.4 h1:YT+dHr+eoK9+em0MTTYjNMFxX+GvTYRIuG9b37KD+EU=
+github.com/lcylpzls/validx v1.2.4/go.mod h1:riR2Vb8sNIJAgD1Xpnwc/5dHSKFRXNdpuMqJGzT/1zA=
