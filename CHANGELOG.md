@@ -2,6 +2,18 @@
 
 本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+
+## [v1.5.0] - 2026-08-11
+
+### 破坏性变更
+
+- `TraceHook` / `TraceAttr` 契约迁移至零依赖子模块
+  `tracex/contract`（v1.0.0），cachex 不再依赖 tracex 主模块。
+
+### 依赖
+
+- 新增 `tracex/contract v1.0.0`。
+
 ## [v1.4.2] - 2026-08-11
 
 ### 依赖

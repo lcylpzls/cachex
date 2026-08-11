@@ -6,7 +6,7 @@ import (
 
 	"github.com/lcylpzls/cachex/internal/core"
 	"github.com/lcylpzls/metricsx"
-	"github.com/lcylpzls/tracex"
+	"github.com/lcylpzls/tracex/contract"
 )
 
 const Version = core.Version
@@ -26,8 +26,8 @@ type (
 	CacheEvent  = core.CacheEvent
 	EventHook   = core.EventHook
 	Metrics     = metricsx.Sink
-	TraceHook   = tracex.TraceHook
-	TraceAttr   = tracex.TraceAttr
+	TraceHook   = contract.TraceHook
+	TraceAttr   = contract.TraceAttr
 )
 
 func New(opts ...Option) (*Cache, error) { return core.New(opts...) }
