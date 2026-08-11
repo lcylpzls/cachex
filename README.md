@@ -3,7 +3,7 @@
 自研高性能内存缓存库:并发分片、精确 LRU 淘汰、独立 TTL 过期、
 Singleflight 击穿防护,与 errx / logx 生态打通。
 
-> 当前状态:**v1.0.0 正式版,API 已冻结**。
+> 当前状态:**v1.4.1**。
 
 ## 定位
 
@@ -47,20 +47,18 @@ v, err := cachex.GetOrSet(ctx, cache, "user:1", 10*time.Minute,
 
 - 语句覆盖率 100%,race、vet、staticcheck、fuzz、govulncheck 全绿;
 - 三平台 CI(ubuntu / windows / macos);
-- 性能基准与手写分片 map 同量级(见 docs/iteration-plan.md)。
+- 性能基准与手写分片 map 同量级(见 [docs/performance.md](docs/performance.md))。
 
 ## 稳定性承诺
 
 - 本库遵循[语义化版本](https://semver.org/lang/zh-CN/);
-- v1.0.0 起公开 API 冻结:新增以次版本发布,破坏性变更仅随主版本;
+- 家族约定:破坏性变更统一走 minor 版本(不强制主版本升级);
 - 每个版本发布前执行:100% 覆盖率、race、staticcheck、fuzz、
-  govulncheck、apidiff 对比与三平台 CI。
+  govulncheck 与三平台 CI。
 
 ## 文档
 
 - [docs/README.md](docs/README.md) — 文档索引
-- [docs/cache-research.md](docs/cache-research.md) — 缓存领域调研手册
-- [docs/comparison.md](docs/comparison.md) — 与竞品全维度对比
 - [docs/performance.md](docs/performance.md) — 性能基准与方法
 - [examples/basic](examples/basic) — 缓存读写与 TTL
 - [examples/load](examples/load) — 击穿防护 GetOrSet
